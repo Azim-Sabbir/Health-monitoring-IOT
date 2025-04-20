@@ -28,7 +28,7 @@ const Monitor = () => {
 
         const response = await axios.post("/api/sensor-data", payload);
         if (response.status === 200) {
-            console.log(response)
+            // console.log(response)
         } else {
             console.error("Error saving data");
         }
@@ -44,8 +44,10 @@ const Monitor = () => {
         const dbRef = ref(database, "fall_detection");
         onValue(dbRef, (snapshot) => {
             if (snapshot.exists()) {
-                setIsFall(snapshot.val());
-                entryFallDetection();
+                const fallDetectionData = snapshot.val();
+                setIsFall(fallDetectionData);
+                 if (fallDetectionData === "No") return;
+                 entryFallDetection();
             }
         });
     }, []);
@@ -73,28 +75,79 @@ const Monitor = () => {
     }, [isFall, audioEnabled]);
 
     return (
-        <div className="flex flex-col p-6 min-h-screen bg-gray-100">
-            <h2 className="text-3xl font-semibold text-gray-800 mb-6">Sensor Data Overview</h2>
+        <div className="flex flex-col p-4 md:p-6 min-h-screen bg-gray-100">
+            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Sensor Data Overview</h2>
 
+            {/* Fall Alert */}
             {isFall && (
-                <div className="bg-red-500 text-white p-4 rounded-lg mb-4 flex justify-between items-center">
-                    <span>🚨 Fall detected! Take immediate action.</span>
-                    <button onClick={stopAlert} className="bg-white text-red-500 px-4 py-2 rounded-lg font-semibold">
-                        Stop Alert
-                    </button>
+                <div className="bg-red-500 text-white p-3 md:p-4 rounded-lg mb-4 w-full">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+                        <span className="mb-2 md:mb-0">🚨 Fall detected! Take immediate action.</span>
+                        <button
+                            onClick={stopAlert}
+                            className="bg-white text-red-500 px-4 py-2 rounded-lg font-semibold"
+                        >
+                            Stop Alert
+                        </button>
+                    </div>
                 </div>
             )}
 
+            {/* Audio Toggle */}
             {!audioEnabled && (
-                <button onClick={enableAudio} className="bg-blue-500 text-white px-4 py-2 rounded-lg mb-4">
+                <button
+                    onClick={enableAudio}
+                    className="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg mb-6 transition-colors"
+                >
                     Enable Audio Alerts 🔊
                 </button>
             )}
 
+            {/* Realtime Sensor Cards (3 columns on desktop) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                {/* Heart Rate Card */}
+                <div className="bg-white shadow-md rounded-lg p-4">
+                    <h3 className="text-gray-500 text-sm font-medium">Heart Rate</h3>
+                    <div className="flex items-end mt-2">
+                        <p className="text-3xl font-bold text-red-500">72</p>
+                        <span className="ml-2 text-gray-500">bpm</span>
+                    </div>
+                    <div className="mt-2 text-sm text-green-500 font-medium">
+                        <span>▲</span> <span>Normal</span>
+                    </div>
+                </div>
+
+                {/* SpO2 Card */}
+                <div className="bg-white shadow-md rounded-lg p-4">
+                    <h3 className="text-gray-500 text-sm font-medium">SpO2 Level</h3>
+                    <div className="flex items-end mt-2">
+                        <p className="text-3xl font-bold text-blue-500">98</p>
+                        <span className="ml-2 text-gray-500">%</span>
+                    </div>
+                    <div className="mt-2 text-sm text-green-500 font-medium">
+                        <span>▲</span> <span>Excellent</span>
+                    </div>
+                </div>
+
+                {/* Temperature Card */}
+                <div className="bg-white shadow-md rounded-lg p-4">
+                    <h3 className="text-gray-500 text-sm font-medium">Temperature</h3>
+                    <div className="flex items-end mt-2">
+                        <p className="text-3xl font-bold text-orange-500">36.5</p>
+                        <span className="ml-2 text-gray-500">°C</span>
+                    </div>
+                    <div className="mt-2 text-sm text-green-500 font-medium">
+                        <span>▲</span> <span>Normal</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Charts Grid */}
             {data ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-semibold">Heart Rate</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {/* Heart Rate Chart */}
+                    <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">Heart Rate History</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <LineChart data={sensorHistory}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -106,8 +159,10 @@ const Monitor = () => {
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-semibold">SpO2 Levels</h3>
+
+                    {/* SpO2 Chart */}
+                    <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">SpO2 Levels History</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <LineChart data={sensorHistory}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -119,8 +174,10 @@ const Monitor = () => {
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-semibold">Temperature</h3>
+
+                    {/* Temperature Chart */}
+                    <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">Temperature History</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <LineChart data={sensorHistory}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -132,8 +189,10 @@ const Monitor = () => {
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
-                    <div className="bg-white shadow-md rounded-lg p-6">
-                        <h3 className="text-xl font-semibold">Acceleration (X-Axis)</h3>
+
+                    {/* Acceleration Chart */}
+                    <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">Acceleration (X-Axis)</h3>
                         <ResponsiveContainer width="100%" height={250}>
                             <LineChart data={sensorHistory}>
                                 <CartesianGrid strokeDasharray="3 3" />
