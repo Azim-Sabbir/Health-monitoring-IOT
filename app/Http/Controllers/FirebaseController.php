@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FallDetection;
 use App\Models\HealthData;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
@@ -21,6 +22,17 @@ class FirebaseController extends Controller
         return response()->json([
             'message' => 'Data synchronized successfully',
             'data' => $data,
+        ]);
+    }
+
+    public function fallDetect(Request $request)
+    {
+        FallDetection::query()->create([
+            'fall_detected' => $request->input('fall_detected'),
+        ]);
+
+        return response()->json([
+            'message' => 'Fall detection data synchronized successfully',
         ]);
     }
 }

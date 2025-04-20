@@ -34,11 +34,18 @@ const Monitor = () => {
         }
     }
 
+    const entryFallDetection = async () => {
+        await axios.post("/api/fall-detect", {
+            fall_detect: true,
+        });
+    }
+
     useEffect(() => {
         const dbRef = ref(database, "fall_detection");
         onValue(dbRef, (snapshot) => {
             if (snapshot.exists()) {
                 setIsFall(snapshot.val());
+                entryFallDetection();
             }
         });
     }, []);
