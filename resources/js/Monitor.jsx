@@ -3,6 +3,7 @@ import { ref, onValue } from "firebase/database";
 import { database } from "../config/firebaseConfig";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import NotificationSound from "./alertAudio.mp3";
+import axios from "axios";
 
 const Monitor = () => {
     const [data, setData] = useState(null);
@@ -12,28 +13,26 @@ const Monitor = () => {
 
     const audioPlayer = useRef(new Audio(NotificationSound));
 
-    useEffect(() => {
-        audioPlayer.current.loop = true;
-        if (isFall && audioEnabled) {
-            audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
-        } else {
-            audioPlayer.current.pause();
-            audioPlayer.current.currentTime = 0;
+    const stopAlert = () => setIsFall(false);
+    const enableAudio = () => {
+        setAudioEnabled(true);
+        audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
+    };
+
+    const saveSensorData = async (sensorData) => {
+        const payload = {
+            heart_rate: sensorData.heart_rate,
+            spO2: sensorData.spO2,
+            temperature: sensorData.temperature,
         }
-    }, [isFall, audioEnabled]);
 
-    useEffect(() => {
-        const dbRef = ref(database, "sensor_data");
-        onValue(dbRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const newData = snapshot.val();
-                setData(newData);
-                setSensorHistory(prev => [...prev.slice(-20), newData]);
-            }
-        });
-    }, []);
-
-    console.log(sensorHistory)
+        const response = await axios.post("/api/sensor-data", payload);
+        if (response.status === 200) {
+            console.log(response)
+        } else {
+            console.error("Error saving data");
+        }
+    }
 
     useEffect(() => {
         const dbRef = ref(database, "fall_detection");
@@ -44,11 +43,27 @@ const Monitor = () => {
         });
     }, []);
 
-    const stopAlert = () => setIsFall(false);
-    const enableAudio = () => {
-        setAudioEnabled(true);
-        audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
-    };
+    useEffect(() => {
+        const dbRef = ref(database, "sensor_data");
+        onValue(dbRef, (snapshot) => {
+            if (snapshot.exists()) {
+                const newData = snapshot.val();
+                setData(newData);
+                saveSensorData(newData);
+                setSensorHistory(prev => [...prev.slice(-20), newData]);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        audioPlayer.current.loop = true;
+        if (isFall && audioEnabled) {
+            audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
+        } else {
+            audioPlayer.current.pause();
+            audioPlayer.current.currentTime = 0;
+        }
+    }, [isFall, audioEnabled]);
 
     return (
         <div className="flex flex-col p-6 min-h-screen bg-gray-100">

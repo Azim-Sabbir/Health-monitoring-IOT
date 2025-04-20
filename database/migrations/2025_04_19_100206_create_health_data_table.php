@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('firebases', function (Blueprint $table) {
+        Schema::create('health_data', function (Blueprint $table) {
             $table->id();
+            $table->string('device_id')->nullable();
+            $table->string('heart_rate')->nullable();
+            $table->string('spO2')->nullable();
+            $table->string('temperature')->nullable();
             $table->timestamps();
         });
     }
@@ -22,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('firebases');
+        Schema::dropIfExists('health_data');
     }
 };
