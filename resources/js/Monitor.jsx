@@ -109,7 +109,7 @@ const Monitor = () => {
                 <div className="bg-white shadow-md rounded-lg p-4">
                     <h3 className="text-gray-500 text-sm font-medium">Heart Rate</h3>
                     <div className="flex items-end mt-2">
-                        <p className="text-3xl font-bold text-red-500">72</p>
+                        <p className="text-3xl font-bold text-red-500">{Math.round(data?.heart_rate ?? 0)}</p>
                         <span className="ml-2 text-gray-500">bpm</span>
                     </div>
                     <div className="mt-2 text-sm text-green-500 font-medium">
@@ -121,7 +121,7 @@ const Monitor = () => {
                 <div className="bg-white shadow-md rounded-lg p-4">
                     <h3 className="text-gray-500 text-sm font-medium">SpO2 Level</h3>
                     <div className="flex items-end mt-2">
-                        <p className="text-3xl font-bold text-blue-500">98</p>
+                        <p className="text-3xl font-bold text-blue-500">{Math.round(data?.spO2 ?? 0)}</p>
                         <span className="ml-2 text-gray-500">%</span>
                     </div>
                     <div className="mt-2 text-sm text-green-500 font-medium">
@@ -133,8 +133,8 @@ const Monitor = () => {
                 <div className="bg-white shadow-md rounded-lg p-4">
                     <h3 className="text-gray-500 text-sm font-medium">Temperature</h3>
                     <div className="flex items-end mt-2">
-                        <p className="text-3xl font-bold text-orange-500">36.5</p>
-                        <span className="ml-2 text-gray-500">°C</span>
+                        <p className="text-3xl font-bold text-orange-500">{Math.round(data?.temperature ?? 0)}</p>
+                        <span className="ml-2 text-gray-500">°F</span>
                     </div>
                     <div className="mt-2 text-sm text-green-500 font-medium">
                         <span>▲</span> <span>Normal</span>
