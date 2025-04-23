@@ -21,3 +21,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/sensor-data', [FirebaseController::class, 'saveSensorData']);
 Route::post('/fall-detect', [FirebaseController::class, 'fallDetect']);
+Route::get('/analytics', [FirebaseController::class, 'analytics']);

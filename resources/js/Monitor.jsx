@@ -12,6 +12,11 @@ const Monitor = () => {
     const [isFall, setIsFall] = useState(false);
     const [audioEnabled, setAudioEnabled] = useState(false);
     const [sensorHistory, setSensorHistory] = useState([]);
+    const [analytics, setAnalytics] = useState({
+        heart_rate: [],
+        spO2: [],
+        temperature: [],
+    });
 
     const [alerts, setAlerts] = useState([
         { type: "Heart Rate", status: "Normal" },
@@ -54,6 +59,16 @@ const Monitor = () => {
         });
     }
 
+    async function fetchSensorData() {
+        const analyticsData = await axios.get("/api/analytics");
+
+        if (analyticsData.status === 200) {
+            setAnalytics(analyticsData.data);
+        } else {
+            console.error("Error fetching analysis data");
+        }
+    }
+
     useEffect(() => {
         const dbRef = ref(database, "fall_detection");
         onValue(dbRef, (snapshot) => {
@@ -72,7 +87,7 @@ const Monitor = () => {
             if (snapshot.exists()) {
                 const newData = snapshot.val();
                 setData(newData);
-                saveSensorData(newData);
+                // saveSensorData(newData);
                 setSensorHistory(prev => [...prev.slice(-20), newData]);
             }
         });
@@ -107,6 +122,10 @@ const Monitor = () => {
         }
     }, [alerts]);
 
+    useEffect( () => {
+        fetchSensorData()
+    }, []);
+
     return (
         <div className="flex flex-col p-4 md:p-6 min-h-screen bg-gray-100">
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Sensor Data Overview</h2>
@@ -136,14 +155,14 @@ const Monitor = () => {
             )}
 
             {/* Audio Toggle */}
-            {!audioEnabled && (
-                <button
-                    onClick={enableAudio}
-                    className="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg mb-6 transition-colors"
-                >
-                    Enable Audio Alerts 🔊
-                </button>
-            )}
+            {/*{!audioEnabled && (*/}
+            {/*    <button*/}
+            {/*        onClick={enableAudio}*/}
+            {/*        className="w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg mb-6 transition-colors"*/}
+            {/*    >*/}
+            {/*        Enable Audio Alerts 🔊*/}
+            {/*    </button>*/}
+            {/*)}*/}
 
             {/* Realtime Sensor Cards (3 columns on desktop) */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -191,13 +210,13 @@ const Monitor = () => {
                     <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
                         <h3 className="text-lg md:text-xl font-semibold mb-2">Heart Rate History</h3>
                         <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={sensorHistory}>
+                            <LineChart data={analytics.heart_rate}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="time" hide />
+                                <XAxis dataKey="name" hide />
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Line type="monotone" dataKey="heart_rate" stroke="#FF0000" />
+                                <Line type="monotone" dataKey="value" stroke="#FF0000" />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -206,46 +225,46 @@ const Monitor = () => {
                     <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
                         <h3 className="text-lg md:text-xl font-semibold mb-2">SpO2 Levels History</h3>
                         <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={sensorHistory}>
+                            <LineChart data={analytics.spO2}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="time" hide />
+                                <XAxis dataKey="name" hide />
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Line type="monotone" dataKey="spO2" stroke="#0000FF" />
+                                <Line type="monotone" dataKey="value" stroke="#0000FF" />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
 
                     {/* Temperature Chart */}
                     <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
-                        <h3 className="text-lg md:text-xl font-semibold mb-2">Temperature History</h3>
+                        <h3 className="text-lg md:text-xl font-semibold mb-2">Temperature Levels History</h3>
                         <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={sensorHistory}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="time" hide />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line type="monotone" dataKey="temperature" stroke="#FFA500" />
+                            <LineChart data={analytics.temperature}>
+                                <CartesianGrid strokeDasharray="3 3"/>
+                                <XAxis dataKey="name" hide/>
+                                <YAxis/>
+                                <Tooltip/>
+                                <Legend/>
+                                <Line type="monotone" dataKey="value" stroke="#FFA500"/>
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
 
                     {/* Acceleration Chart */}
-                    <div className="bg-white shadow-md rounded-lg p-4 md:p-6">
-                        <h3 className="text-lg md:text-xl font-semibold mb-2">Acceleration (X-Axis)</h3>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <LineChart data={sensorHistory}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="time" hide />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line type="monotone" dataKey="mpu6050.accel_x" stroke="#008000" />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
+                    {/*<div className="bg-white shadow-md rounded-lg p-4 md:p-6">*/}
+                    {/*    <h3 className="text-lg md:text-xl font-semibold mb-2">Acceleration (X-Axis)</h3>*/}
+                    {/*    <ResponsiveContainer width="100%" height={250}>*/}
+                    {/*        <LineChart data={sensorHistory}>*/}
+                    {/*            <CartesianGrid strokeDasharray="3 3" />*/}
+                    {/*            <XAxis dataKey="time" hide />*/}
+                    {/*            <YAxis />*/}
+                    {/*            <Tooltip />*/}
+                    {/*            <Legend />*/}
+                    {/*            <Line type="monotone" dataKey="mpu6050.accel_x" stroke="#008000" />*/}
+                    {/*        </LineChart>*/}
+                    {/*    </ResponsiveContainer>*/}
+                    {/*</div>*/}
                 </div>
             ) : (
                 <p className="text-lg text-gray-700">Loading...</p>
