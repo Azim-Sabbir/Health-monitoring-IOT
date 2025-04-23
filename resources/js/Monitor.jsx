@@ -6,14 +6,28 @@ import NotificationSound from "./alertAudio.mp3";
 import axios from "axios";
 
 const Monitor = () => {
+    const audioPlayer = useRef(new Audio(NotificationSound));
+
     const [data, setData] = useState(null);
     const [isFall, setIsFall] = useState(false);
     const [audioEnabled, setAudioEnabled] = useState(false);
     const [sensorHistory, setSensorHistory] = useState([]);
 
-    const audioPlayer = useRef(new Audio(NotificationSound));
+    const [alerts, setAlerts] = useState([
+        { type: "Heart Rate", status: "Normal" },
+        { type: "SpO2", status: "Normal" },
+        { type: "Temperature", status: "Normal" },
+        { type: "Fall Detection", status: "Normal" },
+    ]);
 
-    const stopAlert = () => setIsFall(false);
+
+
+    const stopAlert = () => {
+        setAudioEnabled(false);
+        audioPlayer.current.pause();
+        audioPlayer.current.currentTime = 0;
+    }
+
     const enableAudio = () => {
         setAudioEnabled(true);
         audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
@@ -45,7 +59,7 @@ const Monitor = () => {
         onValue(dbRef, (snapshot) => {
             if (snapshot.exists()) {
                 const fallDetectionData = snapshot.val();
-                setIsFall(fallDetectionData);
+                // setIsFall(fallDetectionData);
                  if (fallDetectionData === "No") return;
                  entryFallDetection();
             }
@@ -64,25 +78,53 @@ const Monitor = () => {
         });
     }, []);
 
+    // useEffect(() => {
+    //     audioPlayer.current.loop = true;
+    //     if (isFall && audioEnabled) {
+    //         audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
+    //     } else {
+    //         audioPlayer.current.pause();
+    //         audioPlayer.current.currentTime = 0;
+    //     }
+    // }, [isFall, audioEnabled]);
+
     useEffect(() => {
-        audioPlayer.current.loop = true;
-        if (isFall && audioEnabled) {
-            audioPlayer.current.play().catch(err => console.error("Failed to play:", err));
-        } else {
-            audioPlayer.current.pause();
-            audioPlayer.current.currentTime = 0;
+        if (!data) return;
+
+        const { heart_rate, spO2, temperature } = data;
+        const newAlerts = [...alerts];
+
+        newAlerts[0].status = heart_rate > 100 ? "High" : heart_rate < 60 ? "Low" : "Normal";
+        newAlerts[1].status = spO2 < 90 ? "Low" : "Normal";
+        newAlerts[2].status = temperature > 100.4 ? "High" : temperature < 95 ? "Low" : "Normal";
+
+        setAlerts(newAlerts);
+    }, [data]);
+
+    useEffect(() => {
+        if (alerts.map(alert => alert.status).includes("High")) {
+            enableAudio();
         }
-    }, [isFall, audioEnabled]);
+    }, [alerts]);
 
     return (
         <div className="flex flex-col p-4 md:p-6 min-h-screen bg-gray-100">
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4 md:mb-6">Sensor Data Overview</h2>
 
             {/* Fall Alert */}
-            {isFall && (
+            {alerts.map(alert => alert.status).includes("High") && (
                 <div className="bg-red-500 text-white p-3 md:p-4 rounded-lg mb-4 w-full">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-center">
-                        <span className="mb-2 md:mb-0">🚨 Fall detected! Take immediate action.</span>
+                        {
+                            alerts.map((alert, index) => (
+                                <div key={index} className="mb-2 md:mb-0">
+                                    <span className={`font-semibold ${alert.status === "High" ? "text-white" : "text-red-300"}`}>
+                                        {alert.status === "High" ? "🚨" : ""} {alert.type}: {alert.status}
+                                    </span>
+                                </div>
+                            ))
+                        }
+                        {/*<span className="mb-2 md:mb-0">🚨 Fall detected! Take immediate action.</span>*/}
                         <button
                             onClick={stopAlert}
                             className="bg-white text-red-500 px-4 py-2 rounded-lg font-semibold"
